@@ -28,16 +28,18 @@ import os
 import time
 import tempfile
 import pretty_midi
+import glob
 
 steps_per_quarter = 4
 
 # Dictionary for storing the different generators.
-BUNDLE_NAMES = ['attention_rnn', 'basic_rnn', 'lookback_rnn']
+BUNDLE_NAMES = glob.glob("*.mag")
+
 melody_generators = {}
-for bundle in BUNDLE_NAMES:
+for bundle_file_path in BUNDLE_NAMES:
+    bundle = bundle_file_path[:-4]
     print('Initiating generator for bundle: ' + bundle)
     bundle_config = magenta.models.melody_rnn.melody_rnn_model.default_configs[bundle]
-    bundle_file_path = os.path.abspath(bundle + '.mag')
     try:
         bundle_file = magenta.music.sequence_generator_bundle.read_bundle_file(bundle_file_path)
     except magenta.music.sequence_generator_bundle.GeneratorBundleParseException:
