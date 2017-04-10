@@ -1,18 +1,18 @@
-# 
+#
 # Copyright 2016 Google Inc.
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 # http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# 
+#
 
 
 import magenta
@@ -29,22 +29,29 @@ import time
 import tempfile
 import pretty_midi
 
-BUNDLE_NAME = 'attention_rnn'
-
-config = magenta.models.melody_rnn.melody_rnn_model.default_configs[BUNDLE_NAME]
-bundle_file = magenta.music.read_bundle_file(os.path.abspath(BUNDLE_NAME+'.mag'))
 steps_per_quarter = 4
 
-generator = melody_rnn_sequence_generator.MelodyRnnSequenceGenerator(
-      model=melody_rnn_model.MelodyRnnModel(config),
-      details=config.details,
-      steps_per_quarter=steps_per_quarter,
-      bundle=bundle_file)
+# Dictionary for storing the different generators.
+BUNDLE_NAMES = ['attention_rnn', 'basic_rnn', 'lookback_rnn']
+melody_generators = {}
+for bundle in BUNDLE_NAMES:
+    print('Initiating generator for bundle: ' + bundle)
+    bundle_config = magenta.models.melody_rnn.melody_rnn_model.default_configs[bundle]
+    bundle_file_path = os.path.abspath(bundle + '.mag')
+    try:
+        bundle_file = magenta.music.sequence_generator_bundle.read_bundle_file(bundle_file_path)
+    except magenta.music.sequence_generator_bundle.GeneratorBundleParseException:
+        print 'Failed to parse bundle file: %s' % bundle_file_path
+    melody_generators[bundle] = melody_rnn_sequence_generator.MelodyRnnSequenceGenerator(
+        model=melody_rnn_model.MelodyRnnModel(bundle_config),
+        details=bundle_config.details,
+        steps_per_quarter=steps_per_quarter,
+        bundle=bundle_file)
 
 def _steps_to_seconds(steps, qpm):
     return steps * 60.0 / qpm / steps_per_quarter
 
-def generate_midi(midi_data, total_seconds=10):
+def generate_midi(midi_data, total_seconds=10, bundle = BUNDLE_NAMES[0]):
     primer_sequence = magenta.music.midi_io.midi_to_sequence_proto(midi_data)
 
     # predict the tempo
@@ -67,7 +74,9 @@ def generate_midi(midi_data, total_seconds=10):
         end_time=total_seconds)
 
     # generate the output sequence
-    generated_sequence = generator.generate(primer_sequence, generator_options)
+    #generated_sequence = generator.generate(primer_sequence, generator_options)
+    print('Generating from ' + bundle)
+    generated_sequence = melody_generators[bundle].generate(primer_sequence, generator_options)
 
     output = tempfile.NamedTemporaryFile()
     magenta.music.midi_io.sequence_proto_to_midi_file(generated_sequence, output.name)
