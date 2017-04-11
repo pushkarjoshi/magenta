@@ -36,7 +36,7 @@ def predict():
     values = json.loads(request.data)
     midi_data = pretty_midi.PrettyMIDI(StringIO(''.join(chr(v) for v in values)))
     duration = float(request.args.get('duration'))
-    bundle = 'basic_rnn' # TODO: Get this from request.
+    bundle = 'attention_rnn' # TODO: Get this from request.
     ret_midi = generate_midi(midi_data, duration, bundle)
     return send_file(ret_midi, attachment_filename='return.mid',
         mimetype='audio/midi', as_attachment=True)

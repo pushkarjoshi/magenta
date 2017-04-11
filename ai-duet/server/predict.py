@@ -32,7 +32,7 @@ import glob
 
 steps_per_quarter = 4
 
-# Dictionary for storing the different generators.
+# Read all possible generators.
 BUNDLE_NAMES = glob.glob("*.mag")
 
 melody_generators = {}
@@ -76,8 +76,6 @@ def generate_midi(midi_data, total_seconds=10, bundle = BUNDLE_NAMES[0]):
         end_time=total_seconds)
 
     # generate the output sequence
-    #generated_sequence = generator.generate(primer_sequence, generator_options)
-    print('Generating from ' + bundle)
     generated_sequence = melody_generators[bundle].generate(primer_sequence, generator_options)
 
     output = tempfile.NamedTemporaryFile()
